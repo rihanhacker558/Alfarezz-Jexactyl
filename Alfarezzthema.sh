@@ -1,32 +1,39 @@
 #!/bin/bash
 
+set -e
+
 echo "📦 [1/10] Memulai install tema Jexactyl..."
 
 # ========================================
 # OPTIONAL: Setup akses mysql otomatis
 # ========================================
 echo "🔐 [2/10] Cek akses root MySQL..."
-
-read -p "Masukkan password MySQL root (tekan Enter jika tidak ada): " MYSQL_PW
+read -s -p "Masukkan password MySQL root (tekan Enter jika tidak ada): " MYSQL_PW
+echo ""
 
 # Buat file ~/.my.cnf agar perintah mysql/mysqldump tidak minta password
 echo "[client]" > ~/.my.cnf
 echo "user=root" >> ~/.my.cnf
-echo "password=$MYSQL_PW" >> ~/.my.cnf
+echo "password=${MYSQL_PW}" >> ~/.my.cnf
 chmod 600 ~/.my.cnf
 
 # ========================================
 # Backup data
 # ========================================
 echo "🗄️ [3/10] Backup panel & database..."
-cp -R /var/www/pterodactyl /var/www/pterodactyl-backup
-mysqldump panel > /var/www/pterodactyl-backup/panel.sql
+cp -r /var/www/pterodactyl /var/www/pterodactyl-backup
+if mysqldump panel > /var/www/pterodactyl-backup/panel.sql; then
+    echo "✅ Backup database berhasil."
+else
+    echo "⚠️  Gagal backup database. Pastikan nama database = 'panel' dan password benar."
+    exit 1
+fi
 
 # ========================================
 # Maintenance mode
 # ========================================
 echo "🔧 [4/10] Menonaktifkan panel..."
-cd /var/www/pterodactyl || exit
+cd /var/www/pterodactyl || { echo "❌ Direktori tidak ditemukan!"; exit 1; }
 php artisan down
 
 # ========================================
@@ -41,6 +48,11 @@ chmod -R 755 storage/* bootstrap/cache
 # Update composer
 # ========================================
 echo "📦 [6/10] Install dependensi..."
+if ! command -v composer &> /dev/null; then
+    echo "⚙️  Composer tidak ditemukan. Mengunduh..."
+    curl -sS https://getcomposer.org/installer | php
+    mv composer.phar /usr/local/bin/composer
+fi
 composer require asbiin/laravel-webauthn
 composer install --no-dev --optimize-autoloader
 
