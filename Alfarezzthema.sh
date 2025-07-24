@@ -26,6 +26,7 @@ if mysqldump panel > /var/www/pterodactyl-backup/panel.sql; then
     echo "✅ Backup database berhasil."
 else
     echo "⚠️  Gagal backup database. Pastikan nama database = 'panel' dan password benar."
+    rm -f ~/.my.cnf
     exit 1
 fi
 
@@ -33,7 +34,7 @@ fi
 # Maintenance mode
 # ========================================
 echo "🔧 [4/10] Menonaktifkan panel..."
-cd /var/www/pterodactyl || { echo "❌ Direktori tidak ditemukan!"; exit 1; }
+cd /var/www/pterodactyl || { echo "❌ Direktori tidak ditemukan!"; rm -f ~/.my.cnf; exit 1; }
 php artisan down
 
 # ========================================
@@ -80,6 +81,12 @@ php artisan queue:restart
 # ========================================
 echo "✅ [10/10] Menyalakan panel kembali..."
 php artisan up
+
+# ========================================
+# Hapus file .my.cnf demi keamanan
+# ========================================
+echo "🧹 Menghapus file .my.cnf untuk keamanan..."
+rm -f ~/.my.cnf
 
 echo ""
 echo "🎉 Selesai! Tema Jexactyl berhasil terpasang dengan aman."
