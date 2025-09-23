@@ -238,11 +238,5 @@ main() {
     echo ""
 }
 
-# Check if script is run with sudo privileges
-if [[ $EUID -eq 0 ]]; then
-    print_error "Please run this script as a regular user, not as root!"
-    exit 1
-fi
-
 # Run main function
 main
